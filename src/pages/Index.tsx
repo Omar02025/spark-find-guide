@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ interface Area {
   name: string;
   code: string;
   subAreas: SubArea[];
+  documents: ElectricalDocument[];
 }
 
 interface SubArea {
@@ -33,19 +35,22 @@ const Index = () => {
       id: 'rm',
       name: 'Room/Motor',
       code: 'RM',
-      subAreas: []
+      subAreas: [],
+      documents: []
     },
     {
       id: 'im', 
       name: 'Instrument/Motor',
       code: 'IM',
-      subAreas: []
+      subAreas: [],
+      documents: []
     },
     {
       id: 'cb',
       name: 'Circuit Breaker',
       code: 'CB', 
-      subAreas: []
+      subAreas: [],
+      documents: []
     }
   ]);
   
@@ -70,7 +75,8 @@ const Index = () => {
       id: code.toLowerCase().replace(/\s+/g, '-'),
       name,
       code,
-      subAreas: []
+      subAreas: [],
+      documents: []
     };
     
     setAreas(prev => [...prev, newArea]);

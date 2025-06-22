@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +28,7 @@ interface Area {
   name: string;
   code: string;
   subAreas: SubArea[];
+  documents: ElectricalDocument[];
 }
 
 interface ElectricalAreaProps {
@@ -80,14 +82,33 @@ const ElectricalArea = ({ area, onUpdateArea, onDeleteArea, canDelete }: Electri
     });
   };
 
-  const addDocumentToSubArea = (subAreaId: string, document: ElectricalDocument) => {
+  const addDocumentToArea = (doc: ElectricalDocument) => {
+    const areaDocuments = area.documents || [];
+    onUpdateArea({
+      documents: [...areaDocuments, doc]
+    });
+  };
+
+  const addDocumentToSubArea = (subAreaId: string, doc: ElectricalDocument) => {
     const updatedSubAreas = area.subAreas.map(sa => 
       sa.id === subAreaId 
-        ? { ...sa, documents: [...sa.documents, document] }
+        ? { ...sa, documents: [...sa.documents, doc] }
         : sa
     );
     
     onUpdateArea({ subAreas: updatedSubAreas });
+  };
+
+  const deleteDocumentFromArea = (documentId: string) => {
+    const areaDocuments = area.documents || [];
+    onUpdateArea({
+      documents: areaDocuments.filter(doc => doc.id !== documentId)
+    });
+    
+    toast({
+      title: "Document Deleted",
+      description: "Document has been removed successfully.",
+    });
   };
 
   const deleteDocumentFromSubArea = (subAreaId: string, documentId: string) => {
@@ -105,26 +126,26 @@ const ElectricalArea = ({ area, onUpdateArea, onDeleteArea, canDelete }: Electri
     });
   };
 
-  const viewDocument = (document: ElectricalDocument) => {
-    if (document.type === 'image') {
+  const viewDocument = (electricalDoc: ElectricalDocument) => {
+    if (electricalDoc.type === 'image') {
       // Open image in new window
       const newWindow = window.open();
       if (newWindow) {
         newWindow.document.write(`
           <html>
-            <head><title>${document.name}</title></head>
+            <head><title>${electricalDoc.name}</title></head>
             <body style="margin:0;padding:20px;background:#f0f0f0;">
-              <h2>${document.name}</h2>
-              <img src="${document.data}" style="max-width:100%;height:auto;" />
+              <h2>${electricalDoc.name}</h2>
+              <img src="${electricalDoc.data}" style="max-width:100%;height:auto;" />
             </body>
           </html>
         `);
       }
     } else {
       // For documents, create download link
-      const link = document.createElement('a');
-      link.href = document.data;
-      link.download = document.name;
+      const link = window.document.createElement('a');
+      link.href = electricalDoc.data;
+      link.download = electricalDoc.name;
       link.click();
     }
   };
@@ -162,6 +183,66 @@ const ElectricalArea = ({ area, onUpdateArea, onDeleteArea, canDelete }: Electri
           </AlertDialog>
         )}
       </div>
+
+      {/* Area Documents */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Area Documents</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {/* Document Upload for Area */}
+            <DocumentUpload
+              onUpload={(doc) => addDocumentToArea(doc)}
+            />
+            
+            {/* Area Documents List */}
+            {area.documents && area.documents.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="font-medium text-gray-900">Documents:</h4>
+                <div className="grid gap-2">
+                  {area.documents.map((doc) => (
+                    <div 
+                      key={doc.id} 
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                    >
+                      <div className="flex items-center space-x-3">
+                        {doc.type === 'image' ? (
+                          <Image className="h-5 w-5 text-green-600" />
+                        ) : (
+                          <FileText className="h-5 w-5 text-blue-600" />
+                        )}
+                        <div>
+                          <p className="font-medium text-sm">{doc.name}</p>
+                          <p className="text-xs text-gray-500">
+                            Uploaded: {new Date(doc.uploadDate).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => viewDocument(doc)}
+                        >
+                          View
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="ghost"
+                          onClick={() => deleteDocumentFromArea(doc.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Add Sub-Area */}
       <Card>
@@ -244,7 +325,7 @@ const ElectricalArea = ({ area, onUpdateArea, onDeleteArea, canDelete }: Electri
               <div className="space-y-4">
                 {/* Document Upload */}
                 <DocumentUpload
-                  onUpload={(document) => addDocumentToSubArea(subArea.id, document)}
+                  onUpload={(doc) => addDocumentToSubArea(subArea.id, doc)}
                 />
                 
                 {/* Documents List */}
