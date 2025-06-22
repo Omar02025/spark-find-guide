@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Plus, Zap } from "lucide-react";
+import { Plus, Zap, Edit, Eye } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import ElectricalArea from "@/components/ElectricalArea";
 import AddAreaDialog from "@/components/AddAreaDialog";
@@ -10,7 +10,6 @@ import AddAreaDialog from "@/components/AddAreaDialog";
 interface Area {
   id: string;
   name: string;
-  code: string;
   subAreas: SubArea[];
   documents: ElectricalDocument[];
 }
@@ -33,22 +32,19 @@ const Index = () => {
   const [areas, setAreas] = useState<Area[]>([
     {
       id: 'rm',
-      name: 'Room/Motor',
-      code: 'RM',
+      name: 'Room/Motor Area',
       subAreas: [],
       documents: []
     },
     {
       id: 'im', 
       name: 'Instrument/Motor',
-      code: 'IM',
       subAreas: [],
       documents: []
     },
     {
       id: 'cb',
       name: 'Circuit Breaker',
-      code: 'CB', 
       subAreas: [],
       documents: []
     }
@@ -56,12 +52,17 @@ const Index = () => {
   
   const [activeTab, setActiveTab] = useState('rm');
   const [showAddAreaDialog, setShowAddAreaDialog] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(true);
 
   // Load data from localStorage on mount
   useEffect(() => {
     const savedAreas = localStorage.getItem('electricalAreas');
+    const savedMode = localStorage.getItem('editMode');
     if (savedAreas) {
       setAreas(JSON.parse(savedAreas));
+    }
+    if (savedMode !== null) {
+      setIsEditMode(JSON.parse(savedMode));
     }
   }, []);
 
@@ -70,11 +71,15 @@ const Index = () => {
     localStorage.setItem('electricalAreas', JSON.stringify(areas));
   }, [areas]);
 
-  const addArea = (name: string, code: string) => {
+  // Save edit mode to localStorage
+  useEffect(() => {
+    localStorage.setItem('editMode', JSON.stringify(isEditMode));
+  }, [isEditMode]);
+
+  const addArea = (name: string) => {
     const newArea: Area = {
-      id: code.toLowerCase().replace(/\s+/g, '-'),
+      id: Date.now().toString(),
       name,
-      code,
       subAreas: [],
       documents: []
     };
@@ -83,7 +88,7 @@ const Index = () => {
     setActiveTab(newArea.id);
     toast({
       title: "Area Added",
-      description: `${name} (${code}) has been added successfully.`,
+      description: `${name} has been added successfully.`,
     });
   };
 
@@ -117,6 +122,14 @@ const Index = () => {
     });
   };
 
+  const toggleMode = () => {
+    setIsEditMode(!isEditMode);
+    toast({
+      title: `${!isEditMode ? 'Edit' : 'Read-only'} Mode`,
+      description: `Switched to ${!isEditMode ? 'edit' : 'read-only'} mode.`,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="container mx-auto p-4">
@@ -136,13 +149,25 @@ const Index = () => {
                 </p>
               </div>
             </div>
-            <Button 
-              onClick={() => setShowAddAreaDialog(true)}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Area
-            </Button>
+            <div className="flex items-center space-x-3">
+              <Button 
+                onClick={toggleMode}
+                variant={isEditMode ? "default" : "outline"}
+                className={isEditMode ? "bg-green-600 hover:bg-green-700" : ""}
+              >
+                {isEditMode ? <Edit className="h-4 w-4 mr-2" /> : <Eye className="h-4 w-4 mr-2" />}
+                {isEditMode ? 'Edit Mode' : 'Read Only'}
+              </Button>
+              {isEditMode && (
+                <Button 
+                  onClick={() => setShowAddAreaDialog(true)}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Area
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -154,9 +179,9 @@ const Index = () => {
                 <TabsTrigger 
                   key={area.id} 
                   value={area.id}
-                  className="data-[state=active]:bg-blue-600 data-[state=active]:text-white font-medium"
+                  className="data-[state=active]:bg-blue-600 data-[state=active]:text-white font-medium text-xs px-2"
                 >
-                  {area.code}
+                  {area.name.length > 12 ? `${area.name.substring(0, 12)}...` : area.name}
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -168,6 +193,7 @@ const Index = () => {
                   onUpdateArea={(updatedArea) => updateArea(area.id, updatedArea)}
                   onDeleteArea={() => deleteArea(area.id)}
                   canDelete={areas.length > 1}
+                  isEditMode={isEditMode}
                 />
               </TabsContent>
             ))}

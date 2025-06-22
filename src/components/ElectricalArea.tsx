@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +25,6 @@ interface SubArea {
 interface Area {
   id: string;
   name: string;
-  code: string;
   subAreas: SubArea[];
   documents: ElectricalDocument[];
 }
@@ -36,9 +34,10 @@ interface ElectricalAreaProps {
   onUpdateArea: (updatedArea: Partial<Area>) => void;
   onDeleteArea: () => void;
   canDelete: boolean;
+  isEditMode: boolean;
 }
 
-const ElectricalArea = ({ area, onUpdateArea, onDeleteArea, canDelete }: ElectricalAreaProps) => {
+const ElectricalArea = ({ area, onUpdateArea, onDeleteArea, canDelete, isEditMode }: ElectricalAreaProps) => {
   const [newSubAreaName, setNewSubAreaName] = useState('');
   const [showAddSubArea, setShowAddSubArea] = useState(false);
 
@@ -156,9 +155,11 @@ const ElectricalArea = ({ area, onUpdateArea, onDeleteArea, canDelete }: Electri
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">{area.name}</h2>
-          <p className="text-gray-600">Area Code: {area.code}</p>
+          <p className="text-gray-600">
+            {isEditMode ? 'Edit Mode' : 'Read Only Mode'} • {area.subAreas.length} sub-areas • {(area.documents || []).length} documents
+          </p>
         </div>
-        {canDelete && (
+        {canDelete && isEditMode && (
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="destructive" size="sm">
@@ -192,9 +193,11 @@ const ElectricalArea = ({ area, onUpdateArea, onDeleteArea, canDelete }: Electri
         <CardContent>
           <div className="space-y-4">
             {/* Document Upload for Area */}
-            <DocumentUpload
-              onUpload={(doc) => addDocumentToArea(doc)}
-            />
+            {isEditMode && (
+              <DocumentUpload
+                onUpload={(doc) => addDocumentToArea(doc)}
+              />
+            )}
             
             {/* Area Documents List */}
             {area.documents && area.documents.length > 0 && (
@@ -227,13 +230,15 @@ const ElectricalArea = ({ area, onUpdateArea, onDeleteArea, canDelete }: Electri
                         >
                           View
                         </Button>
-                        <Button 
-                          size="sm" 
-                          variant="ghost"
-                          onClick={() => deleteDocumentFromArea(doc.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {isEditMode && (
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
+                            onClick={() => deleteDocumentFromArea(doc.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -245,140 +250,157 @@ const ElectricalArea = ({ area, onUpdateArea, onDeleteArea, canDelete }: Electri
       </Card>
 
       {/* Add Sub-Area */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Sub-Areas</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {!showAddSubArea ? (
-            <Button 
-              onClick={() => setShowAddSubArea(true)}
-              className="w-full border-dashed border-2 border-gray-300 bg-transparent text-gray-600 hover:bg-gray-50"
-              variant="outline"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Sub-Area
-            </Button>
-          ) : (
-            <div className="flex space-x-2">
-              <Input
-                placeholder="Enter sub-area name"
-                value={newSubAreaName}
-                onChange={(e) => setNewSubAreaName(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && addSubArea()}
-              />
-              <Button onClick={addSubArea}>Add</Button>
+      {isEditMode && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Sub-Areas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {!showAddSubArea ? (
               <Button 
-                variant="outline" 
-                onClick={() => {
-                  setShowAddSubArea(false);
-                  setNewSubAreaName('');
-                }}
+                onClick={() => setShowAddSubArea(true)}
+                className="w-full border-dashed border-2 border-gray-300 bg-transparent text-gray-600 hover:bg-gray-50"
+                variant="outline"
               >
-                Cancel
+                <Plus className="h-4 w-4 mr-2" />
+                Add Sub-Area
               </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            ) : (
+              <div className="flex space-x-2">
+                <Input
+                  placeholder="Enter sub-area name"
+                  value={newSubAreaName}
+                  onChange={(e) => setNewSubAreaName(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && addSubArea()}
+                />
+                <Button onClick={addSubArea}>Add</Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setShowAddSubArea(false);
+                    setNewSubAreaName('');
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Sub-Areas List */}
-      <div className="grid gap-4">
-        {area.subAreas.map((subArea) => (
-          <Card key={subArea.id} className="border-l-4 border-l-blue-500">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Folder className="h-5 w-5 text-blue-600" />
-                  <CardTitle className="text-lg">{subArea.name}</CardTitle>
-                  <Badge variant="secondary">
-                    {subArea.documents.length} docs
-                  </Badge>
+      {area.subAreas.length > 0 && (
+        <div className="grid gap-4">
+          {area.subAreas.map((subArea) => (
+            <Card key={subArea.id} className="border-l-4 border-l-blue-500">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Folder className="h-5 w-5 text-blue-600" />
+                    <CardTitle className="text-lg">{subArea.name}</CardTitle>
+                    <Badge variant="secondary">
+                      {subArea.documents.length} docs
+                    </Badge>
+                  </div>
+                  {isEditMode && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Sub-Area</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete "{subArea.name}"? This will also remove all associated documents.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={() => deleteSubArea(subArea.id)}
+                            className="bg-red-600 hover:bg-red-700"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
                 </div>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Delete Sub-Area</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Are you sure you want to delete "{subArea.name}"? This will also remove all associated documents.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction 
-                        onClick={() => deleteSubArea(subArea.id)}
-                        className="bg-red-600 hover:bg-red-700"
-                      >
-                        Delete
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {/* Document Upload */}
-                <DocumentUpload
-                  onUpload={(doc) => addDocumentToSubArea(subArea.id, doc)}
-                />
-                
-                {/* Documents List */}
-                {subArea.documents.length > 0 && (
-                  <div className="space-y-2">
-                    <h4 className="font-medium text-gray-900">Documents:</h4>
-                    <div className="grid gap-2">
-                      {subArea.documents.map((doc) => (
-                        <div 
-                          key={doc.id} 
-                          className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                        >
-                          <div className="flex items-center space-x-3">
-                            {doc.type === 'image' ? (
-                              <Image className="h-5 w-5 text-green-600" />
-                            ) : (
-                              <FileText className="h-5 w-5 text-blue-600" />
-                            )}
-                            <div>
-                              <p className="font-medium text-sm">{doc.name}</p>
-                              <p className="text-xs text-gray-500">
-                                Uploaded: {new Date(doc.uploadDate).toLocaleDateString()}
-                              </p>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {/* Document Upload */}
+                  {isEditMode && (
+                    <DocumentUpload
+                      onUpload={(doc) => addDocumentToSubArea(subArea.id, doc)}
+                    />
+                  )}
+                  
+                  {/* Documents List */}
+                  {subArea.documents.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-gray-900">Documents:</h4>
+                      <div className="grid gap-2">
+                        {subArea.documents.map((doc) => (
+                          <div 
+                            key={doc.id} 
+                            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                          >
+                            <div className="flex items-center space-x-3">
+                              {doc.type === 'image' ? (
+                                <Image className="h-5 w-5 text-green-600" />
+                              ) : (
+                                <FileText className="h-5 w-5 text-blue-600" />
+                              )}
+                              <div>
+                                <p className="font-medium text-sm">{doc.name}</p>
+                                <p className="text-xs text-gray-500">
+                                  Uploaded: {new Date(doc.uploadDate).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex space-x-2">
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => viewDocument(doc)}
+                              >
+                                View
+                              </Button>
+                              {isEditMode && (
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost"
+                                  onClick={() => deleteDocumentFromSubArea(subArea.id, doc.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              )}
                             </div>
                           </div>
-                          <div className="flex space-x-2">
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => viewDocument(doc)}
-                            >
-                              View
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="ghost"
-                              onClick={() => deleteDocumentFromSubArea(subArea.id, doc.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
-      {area.subAreas.length === 0 && (
+      {area.subAreas.length === 0 && !isEditMode && (
+        <div className="text-center py-12 text-gray-500">
+          <Folder className="h-12 w-12 mx-auto mb-4 opacity-50" />
+          <p>No sub-areas available in this area.</p>
+        </div>
+      )}
+
+      {area.subAreas.length === 0 && isEditMode && (
         <div className="text-center py-12 text-gray-500">
           <Folder className="h-12 w-12 mx-auto mb-4 opacity-50" />
           <p>No sub-areas created yet. Add your first sub-area to get started.</p>

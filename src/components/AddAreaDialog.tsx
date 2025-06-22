@@ -9,43 +9,40 @@ import { toast } from "@/hooks/use-toast";
 interface AddAreaDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAddArea: (name: string, code: string) => void;
+  onAddArea: (name: string) => void;
 }
 
 const AddAreaDialog = ({ open, onOpenChange, onAddArea }: AddAreaDialogProps) => {
   const [name, setName] = useState('');
-  const [code, setCode] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name.trim() || !code.trim()) {
+    if (!name.trim()) {
       toast({
         title: "Invalid Input",
-        description: "Please enter both area name and code.",
+        description: "Please enter an area name.",
         variant: "destructive"
       });
       return;
     }
 
-    if (code.length > 5) {
+    if (name.trim().length < 10 || name.trim().length > 20) {
       toast({
-        title: "Code Too Long",
-        description: "Area code should be 5 characters or less.",
+        title: "Invalid Length",
+        description: "Area name must be between 10 and 20 characters.",
         variant: "destructive"
       });
       return;
     }
 
-    onAddArea(name.trim(), code.trim().toUpperCase());
+    onAddArea(name.trim());
     setName('');
-    setCode('');
     onOpenChange(false);
   };
 
   const handleClose = () => {
     setName('');
-    setCode('');
     onOpenChange(false);
   };
 
@@ -61,23 +58,13 @@ const AddAreaDialog = ({ open, onOpenChange, onAddArea }: AddAreaDialogProps) =>
             <Label htmlFor="area-name">Area Name</Label>
             <Input
               id="area-name"
-              placeholder="e.g., Switchgear Room, Control Panel"
+              placeholder="e.g., Switchgear Room Main, Control Panel North"
               value={name}
               onChange={(e) => setName(e.target.value)}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="area-code">Area Code</Label>
-            <Input
-              id="area-code"
-              placeholder="e.g., SG, CP, MCC"
-              value={code}
-              onChange={(e) => setCode(e.target.value.toUpperCase())}
-              maxLength={5}
+              maxLength={20}
             />
             <p className="text-sm text-gray-500">
-              Short code for tab display (max 5 characters)
+              Area name must be between 10-20 characters ({name.length}/20)
             </p>
           </div>
           
