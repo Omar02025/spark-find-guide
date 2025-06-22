@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +8,7 @@ import { Plus, Trash2, Folder, FileText, Image } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import DocumentUpload from "./DocumentUpload";
 
-interface Document {
+interface ElectricalDocument {
   id: string;
   name: string;
   type: 'image' | 'document';
@@ -20,7 +19,7 @@ interface Document {
 interface SubArea {
   id: string;
   name: string;
-  documents: Document[];
+  documents: ElectricalDocument[];
 }
 
 interface Area {
@@ -81,7 +80,7 @@ const ElectricalArea = ({ area, onUpdateArea, onDeleteArea, canDelete }: Electri
     });
   };
 
-  const addDocumentToSubArea = (subAreaId: string, document: Document) => {
+  const addDocumentToSubArea = (subAreaId: string, document: ElectricalDocument) => {
     const updatedSubAreas = area.subAreas.map(sa => 
       sa.id === subAreaId 
         ? { ...sa, documents: [...sa.documents, document] }
@@ -106,7 +105,7 @@ const ElectricalArea = ({ area, onUpdateArea, onDeleteArea, canDelete }: Electri
     });
   };
 
-  const viewDocument = (document: Document) => {
+  const viewDocument = (document: ElectricalDocument) => {
     if (document.type === 'image') {
       // Open image in new window
       const newWindow = window.open();

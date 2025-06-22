@@ -1,10 +1,9 @@
-
 import React, { useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Upload, FileText, Image } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
-interface Document {
+interface ElectricalDocument {
   id: string;
   name: string;
   type: 'image' | 'document';
@@ -13,7 +12,7 @@ interface Document {
 }
 
 interface DocumentUploadProps {
-  onUpload: (document: Document) => void;
+  onUpload: (document: ElectricalDocument) => void;
 }
 
 const DocumentUpload = ({ onUpload }: DocumentUploadProps) => {
@@ -37,7 +36,7 @@ const DocumentUpload = ({ onUpload }: DocumentUploadProps) => {
     reader.onload = (e) => {
       const result = e.target?.result as string;
       
-      const document: Document = {
+      const document: ElectricalDocument = {
         id: Date.now().toString(),
         name: file.name,
         type: file.type.startsWith('image/') ? 'image' : 'document',

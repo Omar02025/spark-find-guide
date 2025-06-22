@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -17,10 +16,10 @@ interface Area {
 interface SubArea {
   id: string;
   name: string;
-  documents: Document[];
+  documents: ElectricalDocument[];
 }
 
-interface Document {
+interface ElectricalDocument {
   id: string;
   name: string;
   type: 'image' | 'document';
